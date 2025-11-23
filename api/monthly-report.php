@@ -3,6 +3,8 @@ header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
+header('X-Content-Type-Options: nosniff');
+header('Cache-Control: no-cache, max-age=0');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -160,6 +162,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($format === 'csv') {
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="monthly_report_' . $year . '_' . sprintf('%02d', $month) . '.csv"');
+        header('X-Content-Type-Options: nosniff');
+        header('Cache-Control: no-cache, max-age=0');
         echo generateExcelReport($report);
     } else {
         echo json_encode($report, JSON_UNESCAPED_UNICODE);
