@@ -73,6 +73,10 @@ if ($reservationTimes && $reservationTimes['enabled']) {
     $isWithinTime = $currentTime >= $startTime && $currentTime <= $endTime;
     $timeMessage = $reservationTimes['message'] ?: "予約時間: {$startTime}-{$endTime}";
 }
+
+// HTTPヘッダーの設定（セキュリティとパフォーマンス）
+header('X-Content-Type-Options: nosniff');
+header('Cache-Control: no-cache, max-age=0');
 ?>
 <!DOCTYPE html>
 <html lang="ja">

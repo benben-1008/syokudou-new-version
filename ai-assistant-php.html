@@ -377,6 +377,12 @@
 
                 const useOllama = document.getElementById('useOllama').checked;
 
+                // チャット履歴をAPI形式に変換（直近6ターンまで）
+                const historyForAPI = chatHistory.slice(-6).map(msg => ({
+                    role: msg.sender === 'user' ? 'user' : 'assistant',
+                    content: msg.message
+                }));
+
                 const response = await fetch('api/ai-response.php', {
                     method: 'POST',
                     headers: {
@@ -384,6 +390,7 @@
                     },
                     body: JSON.stringify({
                         message: userMessage,
+                        history: historyForAPI,
                         useOllama: useOllama
                     })
                 });
@@ -400,22 +407,30 @@
                 console.log('Ollama利用可能:', data.ollamaAvailable);
                 console.log('Ollama使用:', data.ollamaUsed);
                 console.log('APIタイプ:', data.apiType);
+                if (data.debug) {
+                    console.log('デバッグ情報:', data.debug);
+                }
                 console.log('========================');
 
                 if (data && data.response) {
-                    // メッセージにAPI情報を追加
-                    let messageWithInfo = data.response;
-                    if (data.ollamaUsed) {
-                        if (isProductionEnvironment()) {
-                            messageWithInfo += '\n\n🤖 *クラウドAI API が使用されました*';
-                        } else {
-                            messageWithInfo += '\n\n🤖 *Ollama AI が使用されました*';
+                    // エラーメッセージが含まれている場合、より詳細な情報を表示
+                    let responseText = data.response;
+
+                    // デバッグ情報がある場合、コンソールに詳細を表示
+                    if (data.debug && !data.ollamaUsed) {
+                        console.warn('Ollamaが使用されていません。');
+                        console.warn('デバッグ情報:', data.debug);
+
+                        // ユーザーに分かりやすいメッセージを追加
+                        if (!data.ollamaAvailable) {
+                            responseText += '\n\n💡 **ヒント**: Ollamaが起動していない可能性があります。ターミナルで "ollama serve" を実行してください。';
+                        } else if (!data.debug.useOllama) {
+                            responseText += '\n\n💡 **ヒント**: 「AI APIを使用する」にチェックが入っているか確認してください。';
                         }
-                    } else {
-                        messageWithInfo += '\n\n📝 *基本応答システムが使用されました*';
                     }
 
-                    addMessageToChat('assistant', messageWithInfo);
+                    // AIの応答を表示
+                    addMessageToChat('assistant', responseText);
                     chatHistory.push({ sender: 'assistant', message: data.response });
                 } else {
                     throw new Error('PHP APIからの応答が無効です');
